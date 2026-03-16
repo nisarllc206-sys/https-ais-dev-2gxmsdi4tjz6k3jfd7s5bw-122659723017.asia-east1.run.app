@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NEXUS WALLS — AI Wallpaper Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cyan:#00f5ff;--purple:#bf00ff;--pink:#ff0080;--green:#00ff88;--gold:#ffd700;
+  --bg:#020408;--card:#060d14;--card2:#0a1520;--card3:#0d1828;
+  --border:rgba(0,245,255,0.18);--dim:#6b8fa8;--text:#e0f4ff;
+  --glow-c:0 0 20px rgba(0,245,255,0.4);--glow-p:0 0 20px rgba(191,0,255,0.4);
+  --glow-n:0 0 20px rgba(0,255,136,0.4);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,245,255,0.2);border-radius:2px}
+
+/* ─── BG CANVAS ─── */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.35}
+
+/* ─── NAVBAR ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 24px;
+  background:rgba(2,4,8,.88);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);gap:12px;
+}
+.nav-logo{
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.15rem;
+  background:linear-gradient(90deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:2px;white-space:nowrap;
+}
+.nav-links{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.nav-links a{
+  color:var(--dim);text-decoration:none;font-size:.85rem;
+  font-weight:500;letter-spacing:1px;transition:.3s;
+  padding:6px 12px;border-radius:6px;
+}
+.nav-links a:hover,.nav-links a.active{color:var(--cyan);background:rgba(0,245,255,.06)}
+.nav-links a.active{border:1px solid rgba(0,245,255,.2)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-cta{
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;padding:8px 18px;border-radius:4px;
+  color:#000;font-family:'Orbitron',sans-serif;
+  font-size:.72rem;font-weight:700;letter-spacing:1px;
+  cursor:pointer;transition:.3s;white-space:nowrap;
+}
+.nav-cta:hover{transform:scale(1.04);box-shadow:0 0 20px rgba(0,245,255,.5)}
+.gh-pill{
+  display:flex;align-items:center;gap:6px;
+  border:1px solid rgba(0,245,255,.25);border-radius:20px;
+  padding:5px 12px;font-family:'Share Tech Mono',monospace;font-size:.72rem;
+  color:var(--cyan);cursor:pointer;transition:.3s;background:rgba(0,245,255,.04);
+}
+.gh-pill:hover{border-color:var(--cyan);background:rgba(0,245,255,.08)}
+.gh-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;flex-shrink:0}
+.gh-dot.off{background:#444;box-shadow:none;animation:none}
+.burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px}
+.burger span{display:block;width:22px;height:2px;background:var(--cyan);border-radius:2px;transition:.3s}
+.burger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+.mobile-menu{
+  display:none;position:fixed;top:58px;left:0;right:0;z-index:999;
+  background:rgba(2,4,8,.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:16px 24px;
+  flex-direction:column;gap:4px;
+}
+.mobile-menu.open{display:flex}
+.mobile-menu a{color:var(--dim);text-decoration:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.95rem}
+.mobile-menu a:hover{color:var(--cyan)}
+
+/* ─── PAGE VIEWS ─── */
+.page{display:none}
+.page.active{display:block}
+
+/* ─── HERO ─── */
+.hero{
+  position:relative;z-index:1;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:100px 24px 60px;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid rgba(0,245,255,.3);border-radius:20px;
+  padding:6px 16px;margin-bottom:24px;
+  font-size:.73rem;letter-spacing:2px;color:var(--cyan);
+  animation:pulse-border 2s ease-in-out infinite;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes pulse-border{0%,100%{border-color:rgba(0,245,255,.3)}50%{border-color:rgba(0,245,255,.7)}}
+.hero h1{
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(2.4rem,8vw,5.5rem);
+  font-weight:900;line-height:1.1;margin-bottom:16px;
+}
+.line1{background:linear-gradient(135deg,#fff 30%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.line2{background:linear-gradient(135deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:1.05rem;color:var(--dim);max-width:580px;line-height:1.7;margin-bottom:36px}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.btn-primary{
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;padding:13px 30px;border-radius:4px;
+  color:#000;font-family:'Orbitron',sans-serif;font-size:.78rem;
+  font-weight:700;letter-spacing:2px;cursor:pointer;transition:.3s;text-transform:uppercase;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,245,255,.4)}
+.btn-outline{
+  background:transparent;border:1px solid var(--border);
+  padding:13px 30px;border-radius:4px;color:var(--cyan);
+  font-family:'Orbitron',sans-serif;font-size:.78rem;
+  font-weight:600;letter-spacing:2px;cursor:pointer;transition:.3s;text-transform:uppercase;
+}
+.btn-outline:hover{border-color:var(--cyan);background:rgba(0,245,255,.05)}
+.hero-stats{display:flex;gap:40px;margin-top:56px;flex-wrap:wrap;justify-content:center}
+.stat{text-align:center}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:1.7rem;font-weight:900;color:var(--cyan)}
+.stat-lbl{font-size:.72rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+
+/* ─── COMMON ─── */
+.wrap{position:relative;z-index:1;padding:0 24px 80px;max-width:1400px;margin:0 auto}
+.section-title{font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:2px}
+.section-sub{color:var(--dim);font-size:.92rem;margin-bottom:28px}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:50px 0}
+
+/* ─── GENERATOR ─── */
+.gen-box{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:28px;margin-bottom:56px;position:relative;overflow:hidden;
+}
+.gen-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--purple),transparent);
+  animation:scanline 3s linear infinite;
+}
+@keyframes scanline{0%{opacity:.3}50%{opacity:1}100%{opacity:.3}}
+.gen-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.gen-input{
+  flex:1;min-width:200px;background:rgba(0,245,255,.04);
+  border:1px solid var(--border);border-radius:6px;padding:13px 16px;
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.95rem;
+  outline:none;transition:.3s;
+}
+.gen-input:focus{border-color:var(--cyan)}
+.gen-input::placeholder{color:var(--dim)}
+.gen-select{
+  background:rgba(0,245,255,.04);border:1px solid var(--border);
+  border-radius:6px;padding:13px 16px;color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:.9rem;outline:none;cursor:pointer;
+}
+.gen-select option{background:#060d14}
+.gen-btn{
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;padding:13px 26px;border-radius:6px;
+  color:#000;font-family:'Orbitron',sans-serif;font-size:.76rem;
+  font-weight:700;letter-spacing:1px;cursor:pointer;transition:.3s;white-space:nowrap;
+}
+.gen-btn:hover{transform:scale(1.03);box-shadow:0 0 24px rgba(0,245,255,.4)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  padding:6px 14px;border-radius:20px;font-size:.76rem;
+  border:1px solid rgba(0,245,255,.18);color:var(--dim);
+  cursor:pointer;transition:.2s;letter-spacing:.5px;
+}
+.chip:hover,.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07)}
+.ai-thinking{display:none;padding:38px;text-align:center;border:1px solid var(--border);border-radius:8px;margin-top:22px}
+.ai-thinking.show{display:block}
+.thinking-orb{
+  width:58px;height:58px;border-radius:50%;margin:0 auto 14px;
+  background:conic-gradient(var(--cyan),var(--purple),var(--pink),var(--cyan));
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.thinking-txt{color:var(--dim);font-size:.88rem}
+.thinking-desc{color:var(--cyan);font-size:.82rem;margin-top:7px;min-height:22px}
+.gen-result{display:none;margin-top:22px;border:1px solid rgba(0,245,255,.18);border-radius:8px;overflow:hidden}
+.gen-result.show{display:block}
+.result-hdr{
+  padding:11px 18px;background:rgba(0,245,255,.04);
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--border);
+}
+.result-title{font-family:'Orbitron',sans-serif;font-size:.77rem;color:var(--cyan)}
+#genCanvas{width:100%;height:300px;display:block}
+.result-actions{display:flex;gap:9px;padding:13px 18px;background:rgba(0,0,0,.3);flex-wrap:wrap}
+.r-btn{padding:7px 18px;border-radius:4px;font-size:.76rem;font-family:'Orbitron',sans-serif;cursor:pointer;transition:.2s;letter-spacing:.8px;border:none}
+.r-btn.dl{background:var(--green);color:#000;font-weight:700}
+.r-btn.dl:hover{box-shadow:var(--glow-n)}
+.r-btn.save{background:transparent;border:1px solid var(--purple);color:var(--purple)}
+.r-btn.save:hover{background:rgba(191,0,255,.1)}
+.r-btn.regen{background:transparent;border:1px solid var(--dim);color:var(--dim)}
+.r-btn.regen:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ─── FILTER BAR ─── */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap}
+.f-btn{
+  padding:7px 18px;border-radius:4px;font-size:.76rem;
+  border:1px solid rgba(0,245,255,.18);color:var(--dim);
+  cursor:pointer;transition:.2s;background:transparent;
+  font-family:'Orbitron',sans-serif;letter-spacing:1px;
+}
+.f-btn.on,.f-btn:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.06)}
+.search-wrap{margin-left:auto;position:relative}
+.search-inp{
+  background:rgba(0,245,255,.04);border:1px solid var(--border);
+  border-radius:6px;padding:8px 14px 8px 36px;
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.88rem;
+  outline:none;width:210px;transition:.3s;
+}
+.search-inp:focus{border-color:var(--cyan);width:260px}
+.search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:.85rem}
+
+/* ─── WALLPAPER GRID ─── */
+.wall-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+.wall-card{
+  border-radius:10px;overflow:hidden;position:relative;
+  cursor:pointer;transition:.3s;border:1px solid rgba(0,245,255,.08);
+  background:var(--card);aspect-ratio:16/10;
+}
+.wall-card:hover{transform:translateY(-4px);border-color:var(--cyan);box-shadow:0 8px 32px rgba(0,245,255,.18)}
+.wall-card canvas{width:100%;height:100%;display:block}
+.wall-ov{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.9) 0%,transparent 60%);
+  opacity:0;transition:.3s;padding:14px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+}
+.wall-card:hover .wall-ov{opacity:1}
+.wall-name{font-family:'Orbitron',sans-serif;font-size:.72rem;color:#fff;font-weight:700;margin-bottom:3px}
+.wall-tag{font-size:.67rem;color:var(--cyan);letter-spacing:1px;margin-bottom:9px}
+.wall-acts{display:flex;gap:7px}
+.w-btn{padding:5px 11px;border-radius:3px;font-size:.65rem;font-family:'Orbitron',sans-serif;cursor:pointer;transition:.2s;letter-spacing:.5px;border:none}
+.w-btn.dl{background:var(--cyan);color:#000;font-weight:700}
+.w-btn.prev{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.wall-res{
+  position:absolute;top:9px;right:9px;background:rgba(0,0,0,.7);
+  border:1px solid rgba(0,245,255,.28);border-radius:3px;padding:2px 7px;
+  font-size:.62rem;color:var(--cyan);font-family:'Orbitron',sans-serif;
+}
+.wall-new{
+  position:absolute;top:9px;left:9px;background:var(--pink);color:#000;
+  border-radius:3px;padding:2px 7px;font-size:.62rem;font-weight:700;
+  font-family:'Orbitron',sans-serif;
+}
+
+/* ─── TRENDING ─── */
+.trending-scroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory;-ms-overflow-style:none;scrollbar-width:none}
+.trending-scroll::-webkit-scrollbar{display:none}
+.trend-card{flex:0 0 190px;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;scroll-snap-align:start;transition:.3s;border:1px solid rgba(0,245,255,.08)}
+.trend-card:hover{border-color:var(--cyan);transform:scale(1.03)}
+.trend-card canvas{width:190px;height:125px;display:block}
+.trend-info{padding:9px 11px;background:var(--card2)}
+.trend-name{font-size:.75rem;color:var(--text);font-weight:600;margin-bottom:2px}
+.trend-count{font-size:.66rem;color:var(--dim)}
+
+/* ─── FEATURED ─── */
+.feat-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:56px}
+.feat-big{grid-row:span 2}
+.feat-card{border-radius:10px;overflow:hidden;position:relative;cursor:pointer;transition:.3s;border:1px solid rgba(0,245,255,.12)}
+.feat-card:hover{border-color:var(--purple);box-shadow:var(--glow-p)}
+.feat-card canvas{width:100%;display:block}
+.feat-big canvas{height:480px}
+.feat-card:not(.feat-big) canvas{height:232px}
+.feat-card .wall-ov{opacity:.4}
+.feat-card:hover .wall-ov{opacity:1}
+
+/* ─── MODAL ─── */
+.modal-bg{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;max-width:900px;width:100%;animation:minIn .3s ease}
+@keyframes minIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-top{display:flex;justify-content:space-between;align-items:center;padding:15px 22px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan)}
+.modal-close{background:none;border:none;color:var(--dim);font-size:1.3rem;cursor:pointer}
+.modal-close:hover{color:var(--pink)}
+#modalCanvas{width:100%;max-height:440px;display:block}
+.modal-info{padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.modal-name{font-family:'Orbitron',sans-serif;font-size:1rem;color:#fff;margin-bottom:4px}
+.modal-tags{display:flex;gap:7px;flex-wrap:wrap}
+.modal-tag{padding:3px 9px;border-radius:10px;font-size:.7rem;border:1px solid rgba(0,245,255,.28);color:var(--cyan)}
+.modal-dl{background:linear-gradient(135deg,var(--cyan),var(--green));border:none;padding:10px 22px;border-radius:4px;color:#000;font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1px;cursor:pointer;transition:.3s}
+.modal-dl:hover{box-shadow:var(--glow-n)}
+
+/* ─── SETTINGS MODAL ─── */
+.settings-bg{display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.87);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px}
+.settings-bg.open{display:flex}
+.settings-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;animation:minIn .3s ease;overflow:hidden}
+.settings-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,rgba(0,245,255,.05),transparent)}
+.settings-title{font-family:'Orbitron',sans-serif;font-size:.9rem;color:var(--cyan);letter-spacing:2px}
+.settings-body{padding:26px 22px}
+.s-label{font-size:.75rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;display:block}
+.api-wrap{position:relative;margin-bottom:14px}
+.api-inp{width:100%;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:8px;padding:13px 46px 13px 15px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;outline:none;transition:.3s;letter-spacing:1px}
+.api-inp:focus{border-color:var(--cyan)}
+.api-inp.ok{border-color:var(--green)}
+.api-inp.err{border-color:var(--pink)}
+.eye-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);cursor:pointer;font-size:.95rem;transition:.2s}
+.eye-btn:hover{color:var(--cyan)}
+.api-hint{font-size:.73rem;color:var(--dim);line-height:1.6;margin-bottom:18px;padding:11px;border-radius:6px;background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.07)}
+.api-hint a{color:var(--cyan);text-decoration:none}
+.api-hint a:hover{text-decoration:underline}
+.api-status-bar{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:6px;margin-bottom:18px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);font-size:.78rem;transition:.3s}
+.api-status-bar.ok{border-color:rgba(0,255,136,.25)}
+.api-status-bar.err{border-color:rgba(255,0,128,.25)}
+.api-sdot{width:7px;height:7px;border-radius:50%;background:#444;flex-shrink:0;transition:.3s}
+.api-sdot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.api-sdot.err{background:var(--pink);box-shadow:0 0 5px var(--pink)}
+.api-stxt{color:var(--dim)}
+
+/* ─── GITHUB PAGE ─── */
+.gh-page{position:relative;z-index:1;padding:90px 24px 0}
+.gh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.gsc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 16px;position:relative;overflow:hidden;transition:.25s}
+.gsc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.gsc.c::after{background:linear-gradient(90deg,var(--cyan),transparent)}
+.gsc.p::after{background:linear-gradient(90deg,var(--purple),transparent)}
+.gsc.n::after{background:linear-gradient(90deg,var(--green),transparent)}
+.gsc.g::after{background:linear-gradient(90deg,var(--gold),transparent)}
+.gsc:hover{transform:translateY(-2px);border-color:rgba(0,245,255,.2)}
+.gsc-n{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;line-height:1;margin-bottom:2px}
+.gsc.c .gsc-n{color:var(--cyan)}.gsc.p .gsc-n{color:var(--purple)}.gsc.n .gsc-n{color:var(--green)}.gsc.g .gsc-n{color:var(--gold)}
+.gsc-l{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+
+/* gh tabs */
+.gh-tabs{display:flex;gap:3px;padding:8px 0;overflow-x:auto;margin-bottom:22px}
+.gh-tabs::-webkit-scrollbar{display:none}
+.gtab{flex-shrink:0;padding:8px 18px;background:transparent;border:1px solid transparent;border-radius:8px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--dim);transition:.2s;white-space:nowrap}
+.gtab.on{color:var(--cyan);background:rgba(0,245,255,.07);border-color:rgba(0,245,255,.22)}
+.gtab:hover:not(.on){color:var(--text);background:rgba(255,255,255,.03)}
+
+/* gh panels */
+.gpanel{display:none;animation:fu .3s ease}
+.gpanel.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* cards */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sp2{grid-column:span 2}
+.gcard{background:var(--card);border:1pxPK
+     �d\             	 Nexus-ultra-platforms-main/UT %�iPK
+     �d\            # 	 Nexus-ultra-platforms-main/.github/UT %�iPK
+     �d\            2 	 Nexus-ultra-platforms-main/.github/ISSUE_TEMPLATE/UT %�iPK
+    �d\(�-�*  S  D 	 Nexus-ultra-platforms-main/.github/ISSUE_TEMPLATE/feature_request.mdUT %�i���N�0��y
+�*Uj`4	�vC�8qp�dI��u{{��&�8�)��o']�)���#��H�=��>$��s��|�`!�!�̖a��Qb���Q{r\��l'O�yR]VQm�c8�a��ʫC! �wt��'G��x��'ݶjC�l���`��El�FXg�l�.����a� ݊g�1&�X%י<��/����Vpp�R��ƀ�o��V�R��qY��tBѣ�#թ4G*<�C�d�&����su��C�^�l���.��:I�4�BC�?^��e�<�A�Ǩ������� PK
+    �d\#���j    % 	 Nexus-ultra-platforms-main/.gitignoreUT %�i�R;��0�y
+�d�XB�W��rY�mb�1Dz79{(��&E��#������"�7�m�S^m���2��+:�JI�~�9RDK��]�\�`�3�e�BI�:�d�J�X��q�~;��N/�,>- /O��G�����>���0�m,��>�8�|���.��t�hZ��F���	���je��㵿��_�mU��6[Zp�52�c8��)+��z7������ӕR��L5$y�V	���0��P�'� \���YPz(�g�6ǆ�,B%�y�|��*��}�_��QE���3V]��\k����7�Jq0��`2���4I[n��N:T�g	�T׸���2c-�����Pi�ƽ�fClZ���wsKu����K�PK
+    �d\�]{l  ],  " 	 Nexus-ultra-platforms-main/LICENSEUT %�i�Z[s��~���r�Si��4i牱䆭CiD�n&��%� ���. ���=����dw�VM�5I�ٳ����[���)�^��s��3O�CY�M'���.��d7J{_�~�͓�v�пy�j���%m37v���ܫ����X���ۛ���~y�Z�w7w����w׷w7W���=u�\��-��ߐ����Jպ�(��/�63��p;�4�U��tP�uBv�(MW�*Q+F�
+aUoM5��u�E᳕v�՛�҉
+�T���Z�,�+�o͸݉჆�L9����2�D������A�}�� �`�B���X�o���9�b��A��[+aa����2�V6�D�(1vx@�^	Y������b<�����`����Ҫ�!�<~;v,+Mۚ�K���v,�7��wƒ�h{��|4�Rft'.�%/5{ep�/���b0���t|�K��V���[���}�X�b����O�J��[f�1�@ʅM�=n�{�T���+[��o_����3`6|4n ���MV� DnTF(5�r"=�3��g3������e�u�m�eY�Ǉ�A[�Pл��Q�S�q�[NBm�����^�q��V��ZXN��d�O�Ek*G��U���+��LI(:3�F�w?:S{/G�S*�~�=���E��ZoGK��[�����_
+�����߁;Ɔ򣶦�˝�@� ��'e(���k!����zGǄ��5&�!��1�	p�zr������p�R�>?�Gc?����$�	�0�R
+�.#& ���� Ƀԍ�4!�3\*M1 K�CIF\�f��#����aMf�À��,��".� �Q�=��!�y!>��{;?B25f��p��~ +>(�q���=�����Kb�7ҡ�:J�
+����a�­�]���.w�����V=hr%F1���P`ac�'�ݜg��UN9�����LCI��Vw�˩�O�8�T=I�B��[�������aU+u�O�KK��v�c�ʪ� y�}"�m Z0N:٪��t@dkYR�(��z�ZG�:y�-B���g=~�1e���}Z�@a�PW��I�mC�����/���l��v��ÃG�]�9��S�6"?���T9QAT��1�7
+�Y�)�&/_V��,�i�eq����T	h�q�^�Ȇ�hoq]G�c��fAnt��v\J��+�-E��=࿤ �npq��e%+R!wp�j]�PsG�%���`�c�c��Vn�"��Id�F��-GGU�vl	/=��H��J�zF��5�#����� y[i?!��Ď�RNo;�~E��l$"X�V`o)�\��NS��_�c��,�����m*v��FA<eT��t�OJB�~!~ܶ4`o.�Hx��c �z.���
+�}���X�\\}��mf�4�QYA���B�L,�x�C8%0�^`�~ }M���5:ӽ$�;81~|	��n�q2����U�I�{0%�I5��n�-X9�c� ]��~��Z�"j�H���̥��7�X�}[N�#Y>��L9'la�1sЭD��?��,S��	-�((�!�=�5��u���X^P��hS��������؁q�e�
+	f���죰����MӁ��ʈ]^������f�+��ܺ7;�^�Ք���	�ҡ���.�6���Id���xA8w��ڂ�L���-��P��bY��c/� �0��S�e�V��r�q�H+rkk�{I�c�fD�ğ��R4r�F=�Q��" �'Np����V��V;�)�s�X�-1U�Tl��2�f�gJh4R���XWLQ�^��a���|Ѻ �Ċ�����S�dhN[���� u�6<z��K�6�f#��2�+�m����"���j�b/צ����{��7��^�K>���E}Q=�7������S�����A%Շ�N�{*�a�M�'n��>
+�w�X!ht�q�ݣ˶G��!�2�uߒ1˙�\f;[5@��7g-<u���᲍�) 
+̰T��b��7��R�����>ǐ���1z�\e��B��c�99��
+��TO�V]"hE���]=[��/�^� ��7���)w�O�]�ɔ˒�2Q����CYQ���N�5+���9o&ƃ!��P|�]31�-|֮l �Q�a;�O�����@�`�7AMtL�N�D�{V��s0�Y�����u�,��TO�[�ZY��M�|op�J�Q�����m�y���p>3%�	��q��uj���D���C>�!R�e���-B��d6ˆ�*���~'��LJP�[�K2�`�;pD~&�p�QU���6��I�`��/�����a�f8�L4����y����Խ�Y���h+� �2W��\e�id��{����ޙ+#�����6EJ������H>���D�p�l��8���T�Ⱥq�LT�h2����Q'0qȷ���� �Uts�*��i�6*5��$1� ���1�̆Y����Ub���� ���&�>�7���Y�f0,��kny���(��P}�n�0m���a!�����J�E�A�����cK������3�:2����	x�A��J��Jǽ���@a  a1�ѕ!��rg7Bhx���%\c��f����K��������a~8m�8DJjS��m�����`I'�B�7-^O�6`e�%л"68�=�φl
+~���L	`K�y.����	/mk��'��� ��9pK�7�X	ȋԼ�)X��s�%U/PW����8��8��Z ���Z,�3��b�\�~\��x��^|\��-V��뵸�˯�oމ��g����
+���G���tM�RecҔA4'���䒩�!��Ƽ_޿�.�꫗�ջ����?]�������A�������)��-�W�k~}`�e�.��a�/��퇻ۛ�5W[�-l�f��aSM�t3�]�4\�s��V#=��]��_B�l^��F��q\kG��L�c�̠��Yi�_��6�{���`R\�^ˍn��|��W ��҃e�W;AG贳QK�ɂ �A����U��"�v�Qn��|6�/�(�L��"t�����"l9��n�����|�P&��Ѵ���ke+��>����\��n=�}��b�W	H`x��r^h@h����8��|g�U<�j�5>ntɚcĘ��ѝwf�������;��1�[c��n���'(ʦ�%N	���x-u3Z�F���.�*�g��[ ����r8�HЏq^F���A�%i�_߀�F/7x���ŢĚ�Vȋ;/R�Β����4]�/��n,���SP�tN.�i�
+��V�' u���JŇ�y���@q��_-I16ktf��)�W;�|��΃���+46?�=vB�JF��=3��|�FK�d�!�s�k���H����t�-JB�4)���τ�g�5�3&<�;٦���T�
+� f\��K�r���y�6ݖ��1`2t�ج��8�o�l��ɦ���h�hcԅ�zu�u��kp����Y���������B���F���]���¿F1�&Zm k,��C�j����j*'�@@�3�o�RAd�~�u��&��B0���/�����t��d9���RP�Nm�z� ?�ể�lgw��+� x�/B��g '`a������sҀ��,�D2Vn��f����ՍJ���i����(G�k��֊�ͧ�Մ���>�[.ܻ��LrH[��ƚ�!]&�r��_�/�7�yt��+=�z�i������\^~�"B?�@��ˏ��םoC	cDE�#R�o64-���]d9�p��+����/AeZ�%�)���9C1�H��'�4�x�����;o2�Z��
+!ȉ�@��Ѻ�� �Bw�f���$��N�5�PK
+    �d\/�J�    $ 	 Nexus-ultra-platforms-main/README.mdUT %�imR���@��
+w�lvBwZ� !�ڙx�Q&v4�ܒ�/�h���쭸⊉䙼���=����p�M��YsJ���םnz�E�S'�����w���Θ	lB9�(+ d䑼���L
+'��W�G@`AƱg�5�>ڍB_b28{3��@��(L,I��<)��T�(�=�;8�L=*��m"dx��䜡j�XKn����[�l~څ��F����?��U������g�Q�'�_��Z"�T����c��ݐemf��m5�V��Zn6����%�N�W�c���H��;聒���I�KV�	T|�>KY�
+��i!��p�KI��5Pi��=�����|���֞��*��\�v���2��k��ɟ%� 쀭�]clCEk k��-C_4��=6�vC|y*i���^{��]�bv��8X�-�@{���*u�l7����o%�5�g�v�d���/0���0o�?PK
+    �d\�:r��  �  : 	 Nexus-ultra-platforms-main/bookish-octo-succotash-main.zipUT %�i��eT캆g��PB�!g@i$���n�N�A�q���{hD��C:��߷�>���}�>������s���]* "���b�2��0 V..�v�.O^/���򏯓��3TW �	zo�����'�_  < ��o|������.�6��Ej�',����[�Ȅ��)q'0D;Y�	��1�����r����O�;�f��7뜪�͜JRW�6��++݀�A[bZr*�9��(&��~���W�C(����:��ʂ���.uh)�$/ ��2:E1�("� ,9<�ȏ���3��#�/�CP����@>�I�cg�|�p21KH���yas}�Z۾[�b�v�������!Dc3roN���[�6ok+�ҵށTE��V�m���8�\�0y3}e���U�d;�B�Ȱ�����&?�\5�I�)?E3r�(�g��i�J̧��_+��T[&/�+;߼S�sbK�3ې��&���]���a���:B��u4J����P�jjm[T��gm-8���d �) p��Ԧ�$+��-�����=��Q����ֶ�C�
+��o�~^�����kt�H�f��R��i��%��L�mk(���RO-��;W�y�{�	ɿ0>��xd���c�W����a�g[^;_ϒ5\�b�t=��ʻ{����E�������t�b������r��֠�c������ �j�W>p����&��l�\�yqeW«�di�7�<d))�rcEy�i
+ĵ�m�	��t�~�[E	��Ԩ��N�R�?z�IϭPLd��&���kY~�:�;|:���f2��^'�+C�Q:�w��H�B�AD�rxԦ�X])}�O�ϓ��e������t�B&R���Q�k�oc�z����hcnK����-���_�`+Yr�\�/�&�S�
+p3�ygV$O��_��f,�;�А���B���O�A���<�j߳FU���Z��y��9�|�R����A��t�L�'ZHO*N�Sv����k>.���i5�Ɗ�]�3`Te9��^MU�q�hw���~�U��*F��W�)���J�,��H<�	�b�4�t�s���^���ޤ�	Y0� ¤΀�"�5�Fr9g|.�w6�)��߶B�=���ss6�^�dN�e�6����4L��{���ӣ��9nI��2N�����$�=7ԙ�����z�����y�G`��4���&��dU��c��z:������I���aڏ>HP����n�\U�Í��;�G6�!Dť����P��:t$3&wW�G�:��ӆ��}������C=�U쏨��Hc]�-P!t�;�s�2�bQd�I�]��J'�H�%��TD<��bj{O�?�E���p��=�\�N�?/�z+d��& PٖUR0!��C�D�o��k��L���䡪9c��v4�$vI���X�}Y%��qş�� �3�]ߗ�%�B�ܪW	:$F�w�/�X����'O+���؊޲,�0� ����R�����'a�ή �ѷ�aa���,/�ئ�D骋�PU�E���*1�z>�0%cϏD�:J�2�c�dEsW	=W����^�ϧUT�ü5C� ��@�n'#~��s��'X���P+����6����b�c�k^���#[����M��;``W�ݙ�%e��~^,�R��l�Wq�
+urv\��꽊��;\�He�+����1<-������U�Ӕ�A�	,^�?�〚������oظ�&~"y�"�����}�Z�sq3U\C출�"��=�I"��L��V�s��ʓ7K`�Q�,�]�@i(vn-V��������(�v��/�:���Q���-<Y��zF��ϫ�����H����,�r��BF�H�}�޳&��-_c����s=	wֵ�]Ļ��O�i:>`3ѳpyxl�;��}cޏ�&�ͳ>�9����Ȼ`XA�	�F'b������Lq=k�|����쳗է�K?�����@�D�t�D���<'d�0F�P:�*3G�`K�'�%0IV����l�		����<�j}0&.*@X����M�$�m���??��%�_�����x�b3�|Ӱ����Ol8/���������L�����O�ߥ4��;R�t�Ŀ����~z8�ˣ}B������j`m���9a��ԥ���i�\�i��|�þ����~e�t렴#"Dv���}*۽���6:58cjV[�L�;2��q�$�7����6Q�i�������?�c���
+���cjr,�=%볚ݗҢ���oa����ޟ[q?6��n�5@	?�H�ՆzMoeǽͭ�.���C��^7")wӓ�y�%�~� �դ�]g�%�Tw��2L���_�>L� ]6�d�Ѕt�8�ņ
+F"��*�	k%\��P��j���Po߱,�b M,૞�Blvc������q�qR�޽H �F��/j=Y%	օ���K.HwL�}\�Aq��B]B���n�E�������/5P��&H��Ԕ؇wT�%��k/}e\Y�f��^U_�Td9�V�I�L��'It�ôc@�j���ֵP��S�y�/��k)E�
+��o�7�
+����>��/�8Z��_�z�B4�I���y���}��6� ¨�tQ}D��Z�?).8�Q��eb3.�މx'&���DD��V��<^ϔ�N�����T�xa�d6�r��_G�.���=�3���L�Ĥ�j��ae53��sE��Rz�\8���XA�	��B��3�Y�4'-�ӟo_��UH����K��z�֩�͒K�׋>����1̛���{u��d~�>_�7�12���V�1�ŵO�L	!M�Ž�tFA�Ӷ�*�� f/$l]r��:�z�1�$�Ԑ� +�ŪuGbS�0�+S�mc�D�?�]�ę8����`��"Xh�C�U.�c�صES���6>�ԃc�|m8�75�aD�f�
+W�����0&�&�O���R��f���	` �	�@�Ll��+(��GuO,fr߿��@�y�&������MY�L2�U�ܱ�Ǭ�T��Y:�MnoTu�V����ir���=���R{z�?���!�=�k ��{�-�j8�p�ޏ�	]�ˆ�#��E�|�[xEf�!
+y��'�āڙ��z���kqQ#p���S��EKZ��y����#yZz������))��R��p�+�X����
+��"��oʘ_�������R�,,����k�p����}��&������	��9����Ă�D� Q�qQ9���N_n~7��-�8��,�y͞�,l�����l0F��̱(G���i�*��ʵ/�ǚ�B����9��uH*Ki��+H%^g@�7��K�A2Æ��.TC������Ŕh[��/�M#�Eu�Ϭ�Q�U�	�j����˓e� ��^�_�����u����ۣ_�;D[	�XŜ�&O
+�-�d��0g:��t|-��kU1����|����c��-f��y}�r��i�>�����wfiL/��*�a�"���CP�Ų�<�~�%�"t�g/��{����q��!xz`��VO�)�m�,l��1s�w_�41='�5��w4�R��\v�8(쫖 ������k�`����ݛZ&�f�x���t}��6�d�M�>,.��US���0�;N�.�����[�a[��I�t�� [�fpaU�'��<Q�w7ɏ�Ű�	��c��E�� �GC�D��|�$��)Zɏ��8�� ��Cg�����;V}�g/ѯh����rCE?��&�>�y�""��9����Hn���AF�]�`W�ď
+���>#J[���9�����ɔ�?���2��PU�ϗL�(�v��@�8����"z/��x"����#=�n�g�Br�@ ��<�.�����
+�#x%�*MYY%-�6M��:����vkkdy��}�� j�Ћ�x�
+w�{��|Iv&�܊����*�`��4ȩ�TGo�	�.JqG�/V��!°{O�$�e�%�:�NTf��Y�=���V.+ɟQ�Ni���U�9~8��1��vRdU��ɦ�:��D�GT	@����|���ug�Ș���-����\�Z~�ͥw!�sD���������_"A�~^�^g���W+?�2ޜ���и!�o/env�nJwWM)~//�u�+�r�9�8��,�f��*I��}�@J�Jh�������hЅ���Dʶo�2�䥗�?P�++C��1��bt��Z��N� ?`2����rsx���Ou�>���=�LI�-.���r�0,.���d��)O?X�VPϹ9���^t�t�re�8�~�g���K1ܡK;�=R|�;�1u$�h�7��w�J���x��/+�Ք��=�ݼ��o�zb.�%��QC~h�s��;�1&fA�l2Oä:�1�c���\YB:��|�}�Y�0ojj�)��X���<w�Ahs��,T��蘝����򒘬�ܳ�S0g�� �˸���Sq���w��X"ց��ᎉ�= ~`H��72?�̓�}�1��#f� �76��?�����O�68��-�o������W��_�K����u�P�������q�� ����� D��`HA++)�@��Ea�p$?�&���A�؈�PK  
+     �d\             	              Nexus-ultra-platforms-main/UT %�iPK  
+     �d\            # 	          B   Nexus-ultra-platforms-main/.github/UT %�iPK  
+     �d\            2 	          �   Nexus-ultra-platforms-main/.github/ISSUE_TEMPLATE/UT %�iPK  
+    �d\(�-�*  S  D 	          �   Nexus-ultra-platforms-main/.github/ISSUE_TEMPLATE/feature_request.mdUT %�iPK  
+    �d\#���j    % 	          z  Nexus-ultra-platforms-main/.gitignoreUT %�iPK  
+    �d\�]{l  ],  " 	          0  Nexus-ultra-platforms-main/LICENSEUT %�iPK  
+    �d\/�J�    $ 	          �  Nexus-ultra-platforms-main/README.mdUT %�iPK  
+    �d\�:r��  �  : 	           
+  Nexus-ultra-platforms-main/bookish-octo-succotash-main.zipUT %�iPK        g(  ( 42bb90f7ee70c3d104ffbb34e438f84d4cdeebf4
